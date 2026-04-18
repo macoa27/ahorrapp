@@ -61,7 +61,7 @@ export function Button({
   );
 }
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "prefix" | "suffix"> {
   label?: string;
   error?: string;
   hint?: string;

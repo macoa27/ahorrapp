@@ -90,11 +90,14 @@ export default function OnboardingPage() {
     // Guardar tarjetas en payment_methods
     if (cards.length > 0) {
       await supabase.from('payment_methods').insert(
-        cards.map(c => ({
-          user_id:   user.id,
-          name:      c.name,
+        cards.map((c, i) => ({
+          user_id: user.id,
+          name: c.name,
           last_four: c.last4,
-          bank:      c.bank,
+          bank: c.bank || null,
+          email_origin: null,
+          is_default: i === 0,
+          color: 'cat-transporte',
         }))
       )
     }

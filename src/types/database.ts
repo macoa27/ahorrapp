@@ -32,7 +32,9 @@ export interface Database {
           updated_at: string
         }
         Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['profiles']['Insert']>
+        /** `Partial<Insert>` rompe inferencia por referencia circular; usar `Partial<Row>` como en Supabase CLI. */
+        Update: Partial<Database['public']['Tables']['profiles']['Row']>
+        Relationships: []
       }
       categories: {
         Row: {
@@ -47,6 +49,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['categories']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['categories']['Insert']>
+        Relationships: []
       }
       payment_methods: {
         Row: {
@@ -62,6 +65,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['payment_methods']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['payment_methods']['Insert']>
+        Relationships: []
       }
       transactions: {
         Row: {
@@ -80,6 +84,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['transactions']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['transactions']['Insert']>
+        Relationships: []
       }
       budgets: {
         Row: {
@@ -94,6 +99,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['budgets']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['budgets']['Insert']>
+        Relationships: []
       }
       whatsapp_sessions: {
         Row: {
@@ -106,6 +112,7 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['whatsapp_sessions']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['whatsapp_sessions']['Insert']>
+        Relationships: []
       }
       schema_migrations: {
         Row: {
@@ -116,7 +123,11 @@ export interface Database {
         }
         Insert: Database['public']['Tables']['schema_migrations']['Row']
         Update: Partial<Database['public']['Tables']['schema_migrations']['Row']>
+        Relationships: []
       }
+    }
+    Views: {
+      [_ in never]: never
     }
     Functions: {
       get_monthly_summary: {
@@ -132,6 +143,12 @@ export interface Database {
           budget_pct: number | null
         }[]
       }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }

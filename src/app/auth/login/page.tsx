@@ -11,7 +11,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Button, Input, Divider, Logo, cn } from '@/components/ui'
+import { Button, Input, Divider } from '@/components/ui'
 
 type LoginMode = 'default' | 'email' | 'phone'
 
