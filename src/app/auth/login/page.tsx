@@ -68,7 +68,7 @@ export default function LoginPage() {
       setError('') // mostrar mensaje de "revisá tu email"
       // En un caso real: mostrar un toast de "Revisá tu email"
     } else {
-      router.push('/onboarding')
+      router.push('/auth/onboarding')
     }
   }
 
@@ -95,7 +95,7 @@ export default function LoginPage() {
     })
     setLoading(false)
     if (error) { setError(error.message); return }
-    router.push('/onboarding')
+    router.push('/auth/onboarding')
   }
 
   // ─── RENDER ──────────────────────────────────────────────
