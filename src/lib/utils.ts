@@ -12,16 +12,24 @@ export function monthLabel(m: string) {
   return date.toLocaleDateString("es-AR", { month: "short" }).replace(".", "");
 }
 
+/**
+ * Heurística por comercio (Argentina). Orden: de más específico a categorías amplias.
+ */
 export function autoCategory(merchant: string) {
-  const value = merchant.toLowerCase();
+  const value = merchant
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 
-  if (/(disco|carrefour|jumbo|dia|coto|chango mas|vea)/.test(value)) return "Supermercado";
-  if (/(uber|cabify|sube|ypf|shell|axion|estacion|peaje|metrobus|colectivo)/.test(value)) return "Transporte";
-  if (/(farmacity|farmacia|hospital|clinica|osde|swiss medical|medicus)/.test(value)) return "Salud";
-  if (/(mcdonald|burger king|mostaza|starbucks|cafe|resto|restaurante|pedido ya|rappi)/.test(value))
-    return "Restaurantes";
-  if (/(cinemark|hoyts|netflix|spotify|disney|steam|playstation|xbox)/.test(value)) return "Entretenimiento";
-  if (/(zara|h&m|adidas|nike|falabella|ropa|indumentaria)/.test(value)) return "Ropa";
+  const has = (re: RegExp) => re.test(value);
+
+  if (has(/disco|carrefour|jumbo|coto|\bdia\b/)) return "Supermercado";
+  if (has(/uber|cabify|taxi|sube|peaje|ypf|shell/)) return "Transporte";
+  if (has(/mcdonalds|burger|pizza|sushi|rappi|pedidosya|cafe|bar/)) return "Restaurantes";
+  if (has(/farmacity|farmacia|clinica|doctor|hospital/)) return "Salud";
+  if (has(/netflix|spotify|hbo|disney|amazon|cine/)) return "Entretenimiento";
+  if (has(/edesur|edenor|metrogas|telecom|personal|claro|movistar/)) return "Servicios";
+  if (has(/zara|\bhm\b|adidas|nike|zapatilla|ropa/)) return "Ropa";
 
   return "Otros";
 }
