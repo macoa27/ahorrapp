@@ -239,7 +239,7 @@ export interface DashboardData {
   totalIncome: number
   savingsGoalPct: number
   realSavingsPct: number
-  incomeBreakdown: { label: string; amount: number }[]
+  incomeBreakdown: { id: string; label: string; amount: number }[]
   budgets: BudgetWithSpend[]
 }
 

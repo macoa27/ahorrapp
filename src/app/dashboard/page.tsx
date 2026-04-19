@@ -2,46 +2,36 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
+  Area, AreaChart, CartesianGrid, ReferenceLine,
+  ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { Badge, Button, Card, ProgressBar, cn } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 import { fmt, monthLabel } from "@/lib/utils";
-import type { DashboardData, MonthlySummary, Transaction } from "@/types/database";
+import type { DashboardData, MonthlySummary, Transaction, Income } from "@/types/database";
 import AddIncomeModal from "@/components/dashboard/AddIncomeModal";
+import { EditIncomeModal } from "@/components/dashboard/EditIncomeModal";
 
 type DashboardViewData = Omit<DashboardData, "monthlyEvolution"> & {
-  totalIncome: number;
-  savingsGoalPct: number;
-  realSavingsPct: number;
-  incomeBreakdown: { label: string; amount: number }[];
+  totalIncome:     number;
+  savingsGoalPct:  number;
+  realSavingsPct:  number;
+  incomeBreakdown: { id: string; label: string; amount: number }[];
   monthlyEvolution: Array<{ month: string; total: number; income: number }>;
 };
 
 const DEMO_DATA: DashboardViewData = {
   month: "2025-04",
-  totalSpent: 89340,
-  txCount: 34,
-  avgTicket: 2628,
-  totalBudget: 80000,
-  budgetUsedPct: 112,
-  totalIncome: 320000,
-  savingsGoalPct: 70,
-  realSavingsPct: 72,
+  totalSpent: 89340, txCount: 34, avgTicket: 2628,
+  totalBudget: 80000, budgetUsedPct: 112,
+  totalIncome: 320000, savingsGoalPct: 70, realSavingsPct: 72,
   byCategory: [
-    { category_id: "1", category_name: "Restaurantes", category_icon: "🍔", category_color: "cat-restaurantes", total: 24800, tx_count: 12, budget_amount: 20000, budget_pct: 124 },
-    { category_id: "2", category_name: "Supermercado", category_icon: "🛒", category_color: "cat-supermercado", total: 17500, tx_count: 8,  budget_amount: 25000, budget_pct: 70  },
-    { category_id: "3", category_name: "Ropa",         category_icon: "👕", category_color: "cat-ropa",         total: 13200, tx_count: 3,  budget_amount: null,  budget_pct: null },
-    { category_id: "4", category_name: "Transporte",   category_icon: "🚗", category_color: "cat-transporte",   total: 8100,  tx_count: 7,  budget_amount: 10000, budget_pct: 81  },
-    { category_id: "5", category_name: "Entretenimiento", category_icon: "🎬", category_color: "cat-entretenimiento", total: 6490, tx_count: 2, budget_amount: 8000, budget_pct: 81 },
-    { category_id: "6", category_name: "Otros",        category_icon: "📦", category_color: "cat-otros",        total: 4250,  tx_count: 2,  budget_amount: null,  budget_pct: null },
+    { category_id: "1", category_name: "Restaurantes",    category_icon: "🍔", category_color: "cat-restaurantes",    total: 24800, tx_count: 12, budget_amount: 20000, budget_pct: 124 },
+    { category_id: "2", category_name: "Supermercado",    category_icon: "🛒", category_color: "cat-supermercado",    total: 17500, tx_count: 8,  budget_amount: 25000, budget_pct: 70  },
+    { category_id: "3", category_name: "Ropa",            category_icon: "👕", category_color: "cat-ropa",            total: 13200, tx_count: 3,  budget_amount: null,  budget_pct: null },
+    { category_id: "4", category_name: "Transporte",      category_icon: "🚗", category_color: "cat-transporte",      total: 8100,  tx_count: 7,  budget_amount: 10000, budget_pct: 81  },
+    { category_id: "5", category_name: "Entretenimiento", category_icon: "🎬", category_color: "cat-entretenimiento", total: 6490,  tx_count: 2,  budget_amount: 8000,  budget_pct: 81  },
+    { category_id: "6", category_name: "Otros",           category_icon: "📦", category_color: "cat-otros",           total: 4250,  tx_count: 2,  budget_amount: null,  budget_pct: null },
   ],
   monthlyEvolution: [
     { month: "2024-11", total: 61000, income: 290000 },
@@ -59,8 +49,8 @@ const DEMO_DATA: DashboardViewData = {
     { id: "5", user_id: "u1", amount: 13200, merchant: "Zara Unicenter",    category_id: "3", payment_method_id: null, date: "2025-04-15", source: "manual",   notes: null, raw_email_id: null, created_at: "2025-04-15T16:30:00.000Z", updated_at: "2025-04-15T16:30:00.000Z" },
   ],
   incomeBreakdown: [
-    { label: "Sueldo", amount: 280000 },
-    { label: "Freelance", amount: 40000 },
+    { id: "demo-1", label: "Sueldo",    amount: 280000 },
+    { id: "demo-2", label: "Freelance", amount: 40000  },
   ],
   budgets: [],
 };
@@ -70,40 +60,36 @@ function mergeDashboardView(
   patch: Partial<DashboardViewData> & Partial<DashboardData>
 ): DashboardViewData {
   const evo = patch.monthlyEvolution;
-  const mergedEvolution =
-    Array.isArray(evo) && evo.length
-      ? evo.map((row, i) => {
-          const r = row as { month: string; total: number; income?: number };
-          const income =
-            typeof r.income === "number"
-              ? r.income
-              : base.monthlyEvolution.find((m) => m.month === r.month)?.income ??
-                base.monthlyEvolution[i]?.income ??
-                0;
-          return { month: r.month, total: r.total, income };
-        })
-      : base.monthlyEvolution;
+  const mergedEvolution = Array.isArray(evo) && evo.length
+    ? evo.map((row, i) => {
+        const r = row as { month: string; total: number; income?: number };
+        const income = typeof r.income === "number"
+          ? r.income
+          : base.monthlyEvolution.find((m) => m.month === r.month)?.income ??
+            base.monthlyEvolution[i]?.income ?? 0;
+        return { month: r.month, total: r.total, income };
+      })
+    : base.monthlyEvolution;
 
   return {
-    ...base,
-    ...patch,
-    totalIncome:      patch.totalIncome      ?? base.totalIncome,
-    savingsGoalPct:   patch.savingsGoalPct   ?? base.savingsGoalPct,
-    realSavingsPct:   patch.realSavingsPct   ?? base.realSavingsPct,
-    incomeBreakdown:  patch.incomeBreakdown  ?? base.incomeBreakdown,
-    monthlyEvolution: mergedEvolution,
-    byCategory:       patch.byCategory       ?? base.byCategory,
+    ...base, ...patch,
+    totalIncome:        patch.totalIncome        ?? base.totalIncome,
+    savingsGoalPct:     patch.savingsGoalPct     ?? base.savingsGoalPct,
+    realSavingsPct:     patch.realSavingsPct     ?? base.realSavingsPct,
+    incomeBreakdown:    patch.incomeBreakdown    ?? base.incomeBreakdown,
+    monthlyEvolution:   mergedEvolution,
+    byCategory:         patch.byCategory         ?? base.byCategory,
     recentTransactions: patch.recentTransactions ?? base.recentTransactions,
-    budgets:          patch.budgets          ?? base.budgets,
+    budgets:            patch.budgets            ?? base.budgets,
   };
 }
 
 function sourceBadgeVariant(source: Transaction["source"]): "email" | "whatsapp" | "manual" | "csv" | "brand" {
-  if (source === "email")     return "email";
-  if (source === "whatsapp")  return "whatsapp";
-  if (source === "manual")    return "manual";
-  if (source === "csv")       return "csv";
-  if (source === "import")    return "csv";
+  if (source === "email")    return "email";
+  if (source === "whatsapp") return "whatsapp";
+  if (source === "manual")   return "manual";
+  if (source === "csv")      return "csv";
+  if (source === "import")   return "csv";
   return "brand";
 }
 
@@ -127,7 +113,9 @@ function categoryDotClass(colorToken: string): string | undefined {
   return map[colorToken];
 }
 
-function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value?: number }>; label?: string }) {
+function ChartTooltip({ active, payload, label }: {
+  active?: boolean; payload?: Array<{ value?: number }>; label?: string
+}) {
   if (!active || !payload?.length) return null;
   const v = payload[0]?.value;
   if (typeof v !== "number") return null;
@@ -141,12 +129,14 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 }
 
 export default function DashboardPage() {
-  const [data, setData]               = useState<DashboardViewData>(DEMO_DATA);
   const hoy = new Date();
-  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+
+  const [data, setData]                   = useState<DashboardViewData>(DEMO_DATA);
   const [selectedMonth, setSelectedMonth] = useState(mesActual);
-  const [loading, setLoading]         = useState(false);
-  const [incomeModal, setIncomeModal] = useState(false);
+  const [loading, setLoading]             = useState(false);
+  const [incomeModal, setIncomeModal]     = useState(false);
+  const [editIncome, setEditIncome]       = useState<Income | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -220,7 +210,9 @@ export default function DashboardPage() {
         <KpiCard label="Ingresos" value={`$${fmt(data.totalIncome)}`} sub="Este mes" tone="income" />
         <KpiCard label="Gastos"   value={`$${fmt(data.totalSpent)}`}  sub={`${fmt(data.budgetUsedPct)}% del presupuesto`} tone={data.budgetUsedPct > 100 ? "danger" : "default"} />
         <KpiCard label="Balance"  value={`$${fmt(balance)}`}          sub="Ingresos − gastos" tone={balance >= 0 ? "income" : "danger"} />
-        <KpiCard label="Ahorro %" value={`${fmt(data.realSavingsPct)}%`}
+        <KpiCard
+          label="Ahorro %"
+          value={`${fmt(data.realSavingsPct)}%`}
           sub={savingsGoalMet ? `Meta ${fmt(data.savingsGoalPct)}% · cumplida` : `Meta ${fmt(data.savingsGoalPct)}%`}
           tone={savingsGoalMet ? "brand" : "warning"}
         />
@@ -326,9 +318,21 @@ export default function DashboardPage() {
             </Button>
           </div>
           <p className="text-xl font-bold tracking-tight text-income">${fmt(data.totalIncome)}</p>
-          <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
+          <div className="mt-3 space-y-1 border-t border-white/10 pt-3">
             {data.incomeBreakdown.map((item) => (
-              <div key={item.label} className="flex items-center justify-between text-[11px]">
+              <div
+                key={item.id}
+                className="flex items-center justify-between text-[11px] cursor-pointer hover:bg-white/[0.03] rounded-lg px-1 py-1 transition-colors"
+                onClick={() => setEditIncome({
+                  id:         item.id,
+                  user_id:    "",
+                  label:      item.label,
+                  amount:     item.amount,
+                  month:      `${selectedMonth}-01`,
+                  recurring:  false,
+                  created_at: "",
+                })}
+              >
                 <span className="text-zinc-500">{item.label}</span>
                 <span className="font-medium text-zinc-200">${fmt(item.amount)}</span>
               </div>
@@ -373,14 +377,18 @@ export default function DashboardPage() {
         <TransactionsTable transactions={data.recentTransactions} categoryById={categoryMap} />
       </Card>
 
-      {/* MODAL INGRESOS */}
+      {/* MODALES */}
       <AddIncomeModal
         open={incomeModal}
         onClose={() => setIncomeModal(false)}
-        onSuccess={() => {
-          setIncomeModal(false);
-          void load();
-        }}
+        onSuccess={() => { setIncomeModal(false); void load(); }}
+      />
+
+      <EditIncomeModal
+        open={!!editIncome}
+        income={editIncome}
+        onClose={() => setEditIncome(null)}
+        onSuccess={() => { setEditIncome(null); void load(); }}
       />
 
     </div>
@@ -388,9 +396,7 @@ export default function DashboardPage() {
 }
 
 function KpiCard({ label, value, sub, tone }: {
-  label: string;
-  value: string;
-  sub?: string;
+  label: string; value: string; sub?: string;
   tone: "income" | "danger" | "warning" | "brand" | "default";
 }) {
   const toneClass =
