@@ -142,7 +142,9 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 
 export default function DashboardPage() {
   const [data, setData]               = useState<DashboardViewData>(DEMO_DATA);
-  const [selectedMonth, setSelectedMonth] = useState(DEMO_DATA.month);
+  const hoy = new Date();
+  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+  const [selectedMonth, setSelectedMonth] = useState(mesActual);
   const [loading, setLoading]         = useState(false);
   const [incomeModal, setIncomeModal] = useState(false);
 
