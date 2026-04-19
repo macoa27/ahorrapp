@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
   )
 
   // Buscar usuario por número de WhatsApp
-  const phoneClean = '+' + from.replace('whatsapp:', '').trim()
+  const phoneClean = from.replace('whatsapp:', '').trim()
   console.log('DEBUG phoneClean:', JSON.stringify(phoneClean))
   console.log('DEBUG from:', JSON.stringify(from))
   const { data: profile } = await supabase
