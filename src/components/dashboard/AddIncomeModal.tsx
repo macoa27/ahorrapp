@@ -55,7 +55,7 @@ export default function AddIncomeModal({ open, onClose, onSuccess }: Props) {
       body:    JSON.stringify({
         label:     label.trim(),
         amount:    parseFloat(amount),
-        month:     `${month}-01`,
+        month: month,
         recurring,
       }),
     })
