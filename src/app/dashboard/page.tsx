@@ -181,6 +181,7 @@ const DEMO_DATA: DashboardViewData = {
     { label: "Sueldo", amount: 280000 },
     { label: "Freelance", amount: 40000 },
   ],
+  budgets: [],
 };
 
 function mergeDashboardView(
@@ -212,6 +213,7 @@ function mergeDashboardView(
     monthlyEvolution: mergedEvolution,
     byCategory: patch.byCategory ?? base.byCategory,
     recentTransactions: patch.recentTransactions ?? base.recentTransactions,
+    budgets: patch.budgets ?? base.budgets,
   };
 }
 

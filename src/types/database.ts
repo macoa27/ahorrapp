@@ -101,6 +101,41 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['budgets']['Insert']>
         Relationships: []
       }
+      incomes: {
+        Row: {
+          id: string
+          user_id: string
+          amount: number
+          label: string
+          month: string
+          recurring: boolean
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          amount: number
+          label?: string
+          month: string
+          recurring?: boolean
+        }
+        Update: Partial<Database['public']['Tables']['incomes']['Row']>
+        Relationships: []
+      }
+      savings_goals: {
+        Row: {
+          id: string
+          user_id: string
+          target_pct: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          target_pct: number
+        }
+        Update: Partial<Database['public']['Tables']['savings_goals']['Row']>
+        Relationships: []
+      }
       whatsapp_sessions: {
         Row: {
           id: string
@@ -166,6 +201,12 @@ export type TransactionInsert = Database['public']['Tables']['transactions']['In
 export type Category = Database['public']['Tables']['categories']['Row']
 export type PaymentMethod = Database['public']['Tables']['payment_methods']['Row']
 export type Budget = Database['public']['Tables']['budgets']['Row']
+export type Income = Database['public']['Tables']['incomes']['Row']
+export type IncomeInsert = Database['public']['Tables']['incomes']['Insert']
+export type SavingsGoalInsert = Database['public']['Tables']['savings_goals']['Insert']
+export type SavingsGoal = Database['public']['Tables']['savings_goals']['Row']
+
+export type BudgetWithSpend = Budget & { spent: number }
 
 export type TransactionSource = Transaction['source']
 
@@ -193,8 +234,13 @@ export interface DashboardData {
   totalBudget: number
   budgetUsedPct: number
   byCategory: MonthlySummary[]
-  monthlyEvolution: { month: string; total: number }[]
+  monthlyEvolution: { month: string; total: number; income: number }[]
   recentTransactions: Transaction[]
+  totalIncome: number
+  savingsGoalPct: number
+  realSavingsPct: number
+  incomeBreakdown: { label: string; amount: number }[]
+  budgets: BudgetWithSpend[]
 }
 
 // ─── VALIDACIÓN ──────────────────────────────────────────
