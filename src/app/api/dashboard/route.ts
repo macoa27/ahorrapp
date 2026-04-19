@@ -128,7 +128,8 @@ export async function GET(request: Request) {
   const incomeRows = incomesMonthRes.data ?? [];
   const totalIncome = incomeRows.reduce((s, r) => s + num(r.amount), 0);
   const incomeBreakdown = incomeRows.map((r) => ({
-    label: String(r.label),
+    id:     String(r.id),
+    label:  String(r.label),
     amount: num(r.amount),
   }));
 
