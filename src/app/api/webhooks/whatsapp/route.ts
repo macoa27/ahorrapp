@@ -5,7 +5,7 @@
 // =============================================================
 
 import { NextResponse, type NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+
 
 // ─── HELPERS ────────────────────────────────────────────────
 
@@ -100,7 +100,12 @@ export async function POST(request: NextRequest) {
     return twimlResponse('No pude procesar tu mensaje.')
   }
 
-  const supabase = await createClient()
+  const { createClient: createServiceClient } = await import('@supabase/supabase-js')
+const supabase = createServiceClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!
+)
+
 
   // Buscar usuario por número de WhatsApp
   const phoneClean = from.replace('whatsapp:', '')
