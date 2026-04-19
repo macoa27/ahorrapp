@@ -5,7 +5,7 @@
 // =============================================================
 
 import { NextResponse, type NextRequest } from 'next/server'
-
+import { createClient } from '@supabase/supabase-js'
 
 // ─── HELPERS ────────────────────────────────────────────────
 
@@ -38,17 +38,14 @@ function parsearMonto(str: string): number | null {
 }
 
 function parsearMensaje(texto: string): { monto: number; comercio: string; medioPago: string | null } | null {
-  // Extraer monto — número con o sin $
   const montoMatch = texto.match(/\$?\s*([\d.,]+)/)
   if (!montoMatch) return null
 
   const monto = parsearMonto(montoMatch[1])
   if (!monto) return null
 
-  // Remover el monto del texto
   const sinMonto = texto.replace(montoMatch[0], '').trim()
 
-  // Detectar medio de pago al final del mensaje
   const mediosKnown = ['galicia', 'santander', 'bbva', 'naranja', 'macro', 'hsbc',
     'mercadopago', 'mp', 'efectivo', 'debito', 'débito', 'credito', 'crédito']
   const palabras = sinMonto.toLowerCase().split(/\s+/)
@@ -74,13 +71,13 @@ function parsearMensaje(texto: string): { monto: number; comercio: string; medio
 function autoCategoria(comercio: string): string {
   const lower = comercio.toLowerCase()
   const keywords: Record<string, string[]> = {
-    'Supermercado':     ['disco', 'carrefour', 'jumbo', 'coto', 'dia', 'vea', 'walmart', 'super', 'mercado'],
-    'Restaurantes':     ['mcdonalds', 'burger', 'pizza', 'sushi', 'resto', 'cafe', 'bar', 'rappi', 'pedidos', 'glovo', 'delivery'],
-    'Transporte':       ['uber', 'cabify', 'taxi', 'remis', 'peaje', 'ypf', 'shell', 'nafta', 'sube', 'subte'],
-    'Salud':            ['farmacia', 'farmacity', 'clinica', 'hospital', 'doctor', 'medico'],
-    'Entretenimiento':  ['netflix', 'spotify', 'hbo', 'disney', 'amazon', 'cine', 'teatro'],
-    'Servicios':        ['edesur', 'edenor', 'metrogas', 'telecom', 'personal', 'claro', 'movistar'],
-    'Ropa':             ['zara', 'hm', 'adidas', 'nike', 'ropa', 'zapatilla', 'indumentaria'],
+    'Supermercado':    ['disco', 'carrefour', 'jumbo', 'coto', 'dia', 'vea', 'walmart', 'super', 'mercado'],
+    'Restaurantes':    ['mcdonalds', 'burger', 'pizza', 'sushi', 'resto', 'cafe', 'bar', 'rappi', 'pedidos', 'glovo', 'delivery'],
+    'Transporte':      ['uber', 'cabify', 'taxi', 'remis', 'peaje', 'ypf', 'shell', 'nafta', 'sube', 'subte'],
+    'Salud':           ['farmacia', 'farmacity', 'clinica', 'hospital', 'doctor', 'medico'],
+    'Entretenimiento': ['netflix', 'spotify', 'hbo', 'disney', 'amazon', 'cine', 'teatro'],
+    'Servicios':       ['edesur', 'edenor', 'metrogas', 'telecom', 'personal', 'claro', 'movistar'],
+    'Ropa':            ['zara', 'hm', 'adidas', 'nike', 'ropa', 'zapatilla', 'indumentaria'],
   }
   for (const [cat, kws] of Object.entries(keywords)) {
     if (kws.some(k => lower.includes(k))) return cat
@@ -91,21 +88,18 @@ function autoCategoria(comercio: string): string {
 // ─── WEBHOOK HANDLER ────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
-  // Twilio envía form-encoded
   const formData = await request.formData()
-  const from     = formData.get('From') as string  // 'whatsapp:+549...'
+  const from     = formData.get('From') as string
   const body     = ((formData.get('Body') as string) || '').trim()
 
   if (!from || !body) {
     return twimlResponse('No pude procesar tu mensaje.')
   }
 
-  const { createClient: createServiceClient } = await import('@supabase/supabase-js')
-const supabase = createServiceClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-)
-
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  )
 
   // Buscar usuario por número de WhatsApp
   const phoneClean = from.replace('whatsapp:', '')
@@ -126,7 +120,6 @@ const supabase = createServiceClient(
 
   // ─── ¿Es una confirmación? ────────────────────────────────
   if (/^(si|sí|yes|ok|1)\s*$/i.test(body)) {
-    // Buscar sesión pendiente
     const { data: session } = await supabase
       .from('whatsapp_sessions')
       .select('*')
@@ -148,7 +141,6 @@ const supabase = createServiceClient(
       medioPago: string | null
     }
 
-    // Registrar la transacción
     const hoy = new Date().toISOString().split('T')[0]
     await supabase.from('transactions').insert({
       user_id:           userId,
@@ -162,10 +154,8 @@ const supabase = createServiceClient(
       raw_email_id:      null,
     })
 
-    // Eliminar la sesión
     await supabase.from('whatsapp_sessions').delete().eq('id', session.id)
 
-    // Verificar presupuesto
     const mes = hoy.substring(0, 7)
     let alertaMsg = ''
     if (pending.categoryId) {
@@ -179,8 +169,11 @@ const supabase = createServiceClient(
 
       if (budget) {
         const inicioMes = `${mes}-01`
-        const finMes = new Date(new Date(inicioMes).getFullYear(), new Date(inicioMes).getMonth() + 1, 0)
-          .toISOString().split('T')[0]
+        const finMes = new Date(
+          new Date(inicioMes).getFullYear(),
+          new Date(inicioMes).getMonth() + 1,
+          0
+        ).toISOString().split('T')[0]
 
         const { data: txs } = await supabase
           .from('transactions')
@@ -207,10 +200,7 @@ const supabase = createServiceClient(
 
   // ─── ¿Es una cancelación? ────────────────────────────────
   if (/^(no|cancelar|cancel|2)\s*$/i.test(body)) {
-    await supabase
-      .from('whatsapp_sessions')
-      .delete()
-      .eq('user_id', userId)
+    await supabase.from('whatsapp_sessions').delete().eq('user_id', userId)
     return twimlResponse('❌ Gasto cancelado.')
   }
 
@@ -224,7 +214,6 @@ const supabase = createServiceClient(
     )
   }
 
-  // Detectar categoría
   const catName = autoCategoria(parsed.comercio)
   const { data: catRow } = await supabase
     .from('categories')
@@ -236,7 +225,6 @@ const supabase = createServiceClient(
 
   const categoryId = catRow?.id || null
 
-  // Guardar sesión pendiente (expira en 10 minutos)
   await supabase.from('whatsapp_sessions').delete().eq('user_id', userId)
   await supabase.from('whatsapp_sessions').insert({
     user_id:      userId,
@@ -251,7 +239,6 @@ const supabase = createServiceClient(
     expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
   })
 
-  // Responder con resumen para confirmar
   const montoFmt = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(parsed.monto)
   let msg = `📝 *Gasto detectado*\n`
   msg += `💰 $${montoFmt}\n`
