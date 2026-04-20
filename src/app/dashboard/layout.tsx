@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/presupuesto',   icon: '◎',  label: 'Presupuesto' },
   { href: '/dashboard/objetivos',     icon: '🎯', label: 'Objetivos' },
   { href: '/dashboard/importar',      icon: '📤', label: 'Importar' },
+  { href: '/dashboard/categorias', icon: '🏷️', label: 'Categorías' },
 ]
 
 const SOURCE_ITEMS = [
@@ -82,7 +83,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav className="flex flex-col gap-0.5">
           {NAV_ITEMS.map(item => (
             <a
-              key={item.href}
+              
+            key={item.href}
               href={item.href}
               className={cn(
                 'flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs transition-colors duration-150',
