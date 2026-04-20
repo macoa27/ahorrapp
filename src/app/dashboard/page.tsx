@@ -11,6 +11,7 @@ import { fmt, monthLabel } from "@/lib/utils";
 import type { DashboardData, MonthlySummary, Transaction, Income } from "@/types/database";
 import AddIncomeModal from "@/components/dashboard/AddIncomeModal";
 import { EditIncomeModal } from "@/components/dashboard/EditIncomeModal";
+import { AddTransactionModal } from "@/components/dashboard/AddTransactionModal";
 
 type DashboardViewData = Omit<DashboardData, "monthlyEvolution"> & {
   totalIncome:     number;
@@ -137,6 +138,7 @@ export default function DashboardPage() {
   const [loading, setLoading]             = useState(false);
   const [incomeModal, setIncomeModal]     = useState(false);
   const [editIncome, setEditIncome]       = useState<Income | null>(null);
+  const [addTxModal, setAddTxModal]       = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -199,7 +201,14 @@ export default function DashboardPage() {
             className="cursor-pointer rounded-xl border border-white/10 bg-base-800 px-3 py-2 text-xs text-zinc-300 focus:border-brand/50 focus:outline-none"
             aria-label="Mes"
           />
-          <Button type="button" variant="primary" size="sm" fullWidth={false} className="shrink-0">
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            fullWidth={false}
+            className="shrink-0"
+            onClick={() => setAddTxModal(true)}
+          >
             + Registrar
           </Button>
         </div>
@@ -378,6 +387,12 @@ export default function DashboardPage() {
       </Card>
 
       {/* MODALES */}
+      <AddTransactionModal
+        open={addTxModal}
+        onClose={() => setAddTxModal(false)}
+        onSuccess={() => { setAddTxModal(false); void load(); }}
+      />
+
       <AddIncomeModal
         open={incomeModal}
         onClose={() => setIncomeModal(false)}
