@@ -8,6 +8,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Button, Card, Input } from "@/components/ui";
 import type { Income } from "@/types/database";
+import { formatMoneyInput, parseMoneyInput } from "@/lib/utils";
 
 const LABELS_SUGERIDOS = ["Sueldo", "Freelance", "Alquiler", "Consultoría", "Otro"];
 
@@ -45,7 +46,7 @@ export function EditIncomeModal({ open, income, onClose, onSuccess }: Props) {
     if (!income) return;
     setError(null);
 
-    const n = Number(amount.replace(",", "."));
+    const n = parseMoneyInput(amount);
     if (!Number.isFinite(n) || n <= 0) {
       setError("Ingresá un monto válido mayor a 0.");
       return;
@@ -166,7 +167,7 @@ export function EditIncomeModal({ open, income, onClose, onSuccess }: Props) {
             label="Monto ($)"
             placeholder="280000"
             value={amount}
-            onChange={e => setAmount(e.target.value)}
+            onChange={(e) => setAmount(formatMoneyInput(e.target.value))}
           />
 
           {/* Mes */}

@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button, cn } from '@/components/ui'
+import { formatMoneyInput, parseMoneyInput } from "@/lib/utils";
 
 interface Props {
   open:      boolean
@@ -34,7 +35,7 @@ export default function AddIncomeModal({ open, onClose, onSuccess }: Props) {
   if (!open) return null
 
   async function handleSave() {
-    if (!amount || parseFloat(amount) <= 0) {
+    if (!amount || parseMoneyInput(amount) <= 0) {
       setError('Ingresá un monto válido')
       return
     }
@@ -54,7 +55,7 @@ export default function AddIncomeModal({ open, onClose, onSuccess }: Props) {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
         label:     label.trim(),
-        amount:    parseFloat(amount),
+        amount: parseMoneyInput(amount),
         month: month,
         recurring,
       }),
@@ -123,10 +124,11 @@ export default function AddIncomeModal({ open, onClose, onSuccess }: Props) {
             Monto ($)
           </label>
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             placeholder="280000"
             value={amount}
-            onChange={e => setAmount(e.target.value)}
+            onChange={(e) => setAmount(formatMoneyInput(e.target.value))}
             className="w-full bg-base-900 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-brand/50"
           />
         </div>

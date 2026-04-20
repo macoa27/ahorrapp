@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Badge, Button, Card, Input } from "@/components/ui";
-import { autoCategory } from "@/lib/utils";
+import { autoCategory, formatMoneyInput, parseMoneyInput } from "@/lib/utils";
 import type { Category, PaymentMethod, Transaction } from "@/types/database";
 
 const selectClass =
@@ -82,7 +82,7 @@ export function AddTransactionModal({ open, onClose, onSuccess }: Props) {
     setError(null);
     setAlerta(null);
 
-    const n = Number(amount.replace(",", "."));
+    const n = parseMoneyInput(amount);
     if (!Number.isFinite(n) || n <= 0) {
       setError("Ingresá un monto válido mayor a 0.");
       return;
@@ -166,9 +166,9 @@ export function AddTransactionModal({ open, onClose, onSuccess }: Props) {
               type="text"
               inputMode="decimal"
               label="Monto"
-              placeholder="15000"
+              placeholder="15.000"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => setAmount(formatMoneyInput(e.target.value))}
               prefix="$"
               required
             />

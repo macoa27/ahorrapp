@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button, Card, Input } from "@/components/ui";
 import type { Category, PaymentMethod, Transaction } from "@/types/database";
+import { formatMoneyInput, parseMoneyInput } from "@/lib/utils";
 
 const selectClass =
   "w-full rounded-xl border border-white/10 bg-base-800 px-3 py-2.5 text-sm text-white focus:border-brand/60 focus:outline-none";
@@ -72,7 +73,7 @@ export function EditTransactionModal({ open, transaction, onClose, onSuccess }: 
     if (!transaction) return
     setError(null)
 
-    const n = Number(amount.replace(",", "."))
+    const n = parseMoneyInput(amount);
     if (!Number.isFinite(n) || n <= 0) {
       setError("Ingresá un monto válido mayor a 0.")
       return
@@ -175,7 +176,7 @@ export function EditTransactionModal({ open, transaction, onClose, onSuccess }: 
               label="Monto"
               placeholder="15000"
               value={amount}
-              onChange={e => setAmount(e.target.value)}
+              onChange={(e) => setAmount(formatMoneyInput(e.target.value))}
               prefix="$"
             />
           </div>

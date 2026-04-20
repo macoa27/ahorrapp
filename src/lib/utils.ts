@@ -12,9 +12,6 @@ export function monthLabel(m: string) {
   return date.toLocaleDateString("es-AR", { month: "short" }).replace(".", "");
 }
 
-/**
- * Heurística por comercio (Argentina). Orden: de más específico a categorías amplias.
- */
 export function autoCategory(merchant: string) {
   const value = merchant
     .toLowerCase()
@@ -32,6 +29,18 @@ export function autoCategory(merchant: string) {
   if (has(/zara|\bhm\b|adidas|nike|zapatilla|ropa/)) return "Ropa";
 
   return "Otros";
+}
+
+export function formatMoneyInput(raw: string): string {
+  const clean = raw.replace(/[^\d,]/g, "");
+  const [intPart, decPart] = clean.split(",");
+  const intFormatted = (intPart || "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return decPart !== undefined ? `${intFormatted},${decPart}` : intFormatted;
+}
+
+export function parseMoneyInput(formatted: string): number {
+  const clean = formatted.replace(/\./g, "").replace(",", ".");
+  return parseFloat(clean) || 0;
 }
 
 export const cn = cnFromUI;
